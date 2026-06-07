@@ -1,0 +1,162 @@
+/* Tailwind CSS directives - these are valid and will be processed */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --deep-night-50: #0a0a0f;
+    --deep-night-100: #0f0f1a;
+    --deep-night-200: #1a1a2e;
+    --deep-night-300: #16213e;
+    --deep-night-400: #0f3460;
+    --deep-night-500: #533483;
+    --deep-night-600: #7209b7;
+    --deep-night-700: #8b5cf6;
+    --deep-night-800: #a855f7;
+    --deep-night-900: #c084fc;
+    
+    --neon-blue: #00d4ff;
+    --neon-purple: #a855f7;
+    --neon-pink: #ec4899;
+    --neon-green: #10b981;
+    --neon-yellow: #f59e0b;
+  }
+
+  * {
+    border-color: hsl(var(--border));
+  }
+
+  body {
+    background-color: var(--deep-night-50);
+    color: white;
+    font-family: 'Inter', sans-serif;
+    background: linear-gradient(135deg, #0a0a0f 0%, #16213e 50%, #0f3460 100%);
+    min-height: 100vh;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  /* Custom select dropdown styling */
+  select {
+    background-color: rgba(26, 26, 46, 0.8) !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  }
+
+  select option {
+    background-color: rgba(26, 26, 46, 0.9) !important;
+    color: white !important;
+  }
+
+  select:focus {
+    outline: none !important;
+    border-color: rgba(168, 85, 247, 0.5) !important;
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.3) !important;
+  }
+}
+
+@layer components {
+  .glass-panel {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.05) 100%);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 1rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+  }
+
+  .neon-border {
+    border: 1px solid rgba(168, 85, 247, 0.5);
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+  }
+
+  .btn-primary {
+    background: linear-gradient(to right, var(--neon-purple), var(--neon-blue));
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.75rem;
+    font-weight: 500;
+    transition: all 0.3s;
+  }
+  
+  .btn-primary:hover {
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+    transform: scale(1.05);
+  }
+
+  .btn-secondary {
+    background-color: rgba(255, 255, 255, 0.1);
+    color: white;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.75rem;
+    font-weight: 500;
+    transition: all 0.3s;
+  }
+  
+  .btn-secondary:hover {
+    background-color: rgba(255, 255, 255, 0.2);
+  }
+
+  .card {
+    background-color: rgba(255, 255, 255, 0.1);
+    backdrop-filter: blur(12px);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 1rem;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+    padding: 1.5rem;
+    transition: all 0.3s;
+  }
+  
+  .card:hover {
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+  }
+
+  .input-field {
+    background-color: rgba(255, 255, 255, 0.1);
+    border: 1px solid rgba(255, 255, 255, 0.2);
+    border-radius: 0.75rem;
+    padding: 0.75rem 1rem;
+    color: white;
+    transition: all 0.3s;
+  }
+  
+  .input-field::placeholder {
+    color: rgba(255, 255, 255, 0.5);
+  }
+  
+  .input-field:focus {
+    outline: none;
+    border-color: rgba(168, 85, 247, 0.5);
+    box-shadow: 0 0 20px rgba(168, 85, 247, 0.3);
+  }
+
+  .select-dark {
+    background-color: rgba(26, 26, 46, 0.8) !important;
+    color: white !important;
+    border: 1px solid rgba(255, 255, 255, 0.2) !important;
+  }
+
+  .select-dark option {
+    background-color: rgba(26, 26, 46, 0.9) !important;
+    color: white !important;
+  }
+}
+
+@layer utilities {
+  .text-gradient {
+    background: linear-gradient(to right, var(--neon-blue), var(--neon-purple));
+    background-clip: text;
+    -webkit-background-clip: text;
+    color: transparent;
+  }
+
+  .animate-float {
+    animation: float 6s ease-in-out infinite;
+  }
+
+  .animate-glow {
+    animation: glow 2s ease-in-out infinite alternate;
+  }
+}

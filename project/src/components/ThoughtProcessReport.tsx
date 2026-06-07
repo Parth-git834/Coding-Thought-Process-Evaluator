@@ -37,19 +37,41 @@ import {
 import { useActivity } from '../context/ActivityContext';
 
 const ThoughtProcessReport = () => {
-  const { activities, getAnalysis, currentProblem, lastCode, lastLanguage, lastRunOutput, lastRunError } = useActivity();
+  const { activities, sessionId, getAnalysis, currentProblem, lastCode, lastLanguage, lastRunOutput, lastRunError } = useActivity();
   const [activeTab, setActiveTab] = useState<'overview' | 'methodology' | 'code-analysis' | 'timeline' | 'insights'>('overview');
   const [showDetails, setShowDetails] = useState(false);
   const [isLoadingAnalysis, setIsLoadingAnalysis] = useState(false);
   const [apiAnalysis, setApiAnalysis] = useState<any>(null);
+  const [localMlAnalysis, setLocalMlAnalysis] = useState<any>(null);
 
   const analysis = useMemo(() => getAnalysis(), [getAnalysis]);
 
-  const triggerWorqhatAnalysis = async () => {
+  const triggerAnalysis = async () => {
     setIsLoadingAnalysis(true);
+    
+    // 1. Run local Python Scikit-learn classifier
+    try {
+      const response = await fetch(`http://localhost:5000/api/analysis/generate/${sessionId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+      if (response.ok) {
+        const data = await response.json();
+        setLocalMlAnalysis(data);
+        console.log('✅ Local Scikit-learn predictions loaded:', data);
+      } else {
+        console.error('Failed to run local ML analysis');
+      }
+    } catch (err) {
+      console.error('Error running local ML analysis:', err);
+    }
+
+    // 2. Run Worqhat flow analysis
     try {
       const url = 'https://api.worqhat.com/flows/trigger/e9d18f08-4de7-43c0-a516-f1b6c82f140d';
-  const apiKey = 'wh_mehxy8qsXh1n2oxBwmsjznMdtnrGmFJ4zSdUMMEYqo4Ss';
+      const apiKey = 'wh_mehxy8qsXh1n2oxBwmsjznMdtnrGmFJ4zSdUMMEYqo4Ss';
       const payload = {
         "timeline": JSON.stringify({ activities })
       };
@@ -352,10 +374,10 @@ const ThoughtProcessReport = () => {
     { id: 'insights', label: 'Insights', icon: Lightbulb }
   ];
 
-  // Use API analysis if available, otherwise use local analysis
-  const currentAnalysis = apiAnalysis?.analysis?.[0] || analysis;
-  const currentCodeAnalysis = apiAnalysis?.analysis?.[0]?.codeAnalysis || getCodeAnalysis();
-  const currentRecommendations = apiAnalysis?.analysis?.[0]?.recommendations || getRecommendations();
+  // Use local ML analysis or API analysis if available, otherwise use local fallback
+  const currentAnalysis = localMlAnalysis || apiAnalysis?.analysis?.[0] || analysis;
+  const currentCodeAnalysis = localMlAnalysis?.codeAnalysis || apiAnalysis?.analysis?.[0]?.codeAnalysis || getCodeAnalysis();
+  const currentRecommendations = localMlAnalysis?.recommendations || apiAnalysis?.analysis?.[0]?.recommendations || getRecommendations();
 
   return (
     <div className="h-full flex flex-col">
@@ -373,7 +395,7 @@ const ThoughtProcessReport = () => {
           <motion.button
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
-            onClick={triggerWorqhatAnalysis}
+            onClick={triggerAnalysis}
             disabled={isLoadingAnalysis}
             className="btn-primary flex items-center space-x-2 text-sm"
           >
@@ -501,6 +523,49 @@ const ThoughtProcessReport = () => {
                   ) : (
                     <p className="text-white/50 text-sm">Great job! No major improvements needed.</p>
                   )}
+                </div>
+              </div>
+
+              {/* ML Cognitive Predictions */}
+              <div className="card border border-neon-blue/20">
+                <div className="flex items-center justify-between mb-4">
+                  <h4 className="text-lg font-medium text-white flex items-center space-x-2">
+                    <Brain className="w-5 h-5 text-neon-blue animate-pulse" />
+                    <span>ML Cognitive Predictions</span>
+                  </h4>
+                  <div className="text-xs text-neon-blue bg-neon-blue/10 px-2 py-1 rounded border border-neon-blue/20">
+                    Engine: {currentAnalysis.modelInfo || 'Rule-based engine'}
+                  </div>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <div className="bg-glass-dark p-4 rounded-lg text-center border border-white/5">
+                    <div className="text-xs text-white/50 mb-1">Problem Solving Style</div>
+                    <div className="text-lg font-bold text-white capitalize">
+                      {currentAnalysis.metrics?.problemSolvingApproach?.replace(/_/g, ' ') || 'mixed'}
+                    </div>
+                  </div>
+                  
+                  <div className="bg-glass-dark p-4 rounded-lg text-center border border-white/5">
+                    <div className="text-xs text-white/50 mb-1">Focus Level</div>
+                    <div className="text-xl font-bold text-neon-green">
+                      {currentAnalysis.metrics?.focusScore ? `${currentAnalysis.metrics.focusScore}%` : '80%'}
+                    </div>
+                  </div>
+                  
+                  <div className="bg-glass-dark p-4 rounded-lg text-center border border-white/5">
+                    <div className="text-xs text-white/50 mb-1">Predicted Efficiency</div>
+                    <div className="text-xl font-bold text-neon-yellow">
+                      {currentAnalysis.metrics?.efficiency ? `${currentAnalysis.metrics.efficiency}%` : '85%'}
+                    </div>
+                  </div>
+                  
+                  <div className="bg-glass-dark p-4 rounded-lg text-center border border-white/5">
+                    <div className="text-xs text-white/50 mb-1">Typing Speed (WPM)</div>
+                    <div className="text-xl font-bold text-neon-blue">
+                      {currentAnalysis.metrics?.typingSpeed ? `${Math.round(currentAnalysis.metrics.typingSpeed)}` : '60'}
+                    </div>
+                  </div>
                 </div>
               </div>
 

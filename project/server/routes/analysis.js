@@ -1,6 +1,12 @@
 import express from 'express';
+import { spawn } from 'child_process';
+import { fileURLToPath } from 'url';
+import { dirname, join } from 'path';
 import Analysis from '../models/Analysis.js';
 import Activity from '../models/Activity.js';
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
 
 const router = express.Router();
 
@@ -387,9 +393,11 @@ async function generateAnalysisFromActivities(activities, sessionId) {
   // Analyze methodology
   const pseudocodeActivities = activities.filter(a => a.type === 'pseudocode');
   const testActivities = activities.filter(a => a.type === 'test');
+  const runActivities = activities.filter(a => a.type === 'run');
   const refactorActivities = activities.filter(a => a.type === 'refactor');
   const debugActivities = activities.filter(a => a.type === 'debug');
   const typingActivities = activities.filter(a => a.type === 'typing');
+  const planningActivities = activities.filter(a => a.type === 'planning');
 
   analysis.methodology.pseudocodeFirst = pseudocodeActivities.length > 0 && 
     pseudocodeActivities[0].timestamp < typingActivities[0]?.timestamp;
@@ -489,7 +497,94 @@ async function generateAnalysisFromActivities(activities, sessionId) {
     });
   }
 
+  // Extract features for Python classifier
+  const features = {
+    typing_count: typingActivities.length,
+    pseudocode_count: pseudocodeActivities.length,
+    test_count: testActivities.length,
+    run_count: runActivities.length,
+    refactor_count: refactorActivities.length,
+    debug_count: debugActivities.length,
+    planning_count: activities.filter(a => a.type === 'planning').length,
+    pseudocode_first: analysis.methodology.pseudocodeFirst ? 1 : 0,
+    test_first: analysis.methodology.testFirst ? 1 : 0,
+    debugging_time: debuggingTime,
+    coding_time: codingTime,
+    planning_time: planningTime,
+    testing_time: testingTime,
+    refactoring_time: refactoringTime,
+    error_count: activities.reduce((sum, a) => sum + (a.metadata?.errorCount || 0), 0)
+  };
+
+  // Run Scikit-learn predictions
+  let mlPredictions = null;
+  try {
+    mlPredictions = await runClassifierModel(features);
+    console.log('✅ ML predictions generated:', mlPredictions);
+  } catch (error) {
+    console.error('⚠️ Falling back to rule-based analysis. ML prediction failed:', error.message);
+  }
+
+  if (mlPredictions) {
+    analysis.metrics.problemSolvingApproach = mlPredictions.problemSolvingApproach;
+    analysis.metrics.focusScore = mlPredictions.focusScore;
+    analysis.metrics.efficiency = mlPredictions.efficiency;
+    analysis.metrics.typingSpeed = mlPredictions.typingSpeed;
+    analysis.modelInfo = mlPredictions.modelInfo;
+  } else {
+    analysis.metrics.typingSpeed = typingActivities.length > 0 ? Math.round(typingActivities.length * 5) : 0;
+    analysis.metrics.focusScore = Math.max(30, Math.min(100, 100 - (debugActivities.length * 5) - (activities.reduce((sum, a) => sum + (a.metadata?.errorCount || 0), 0) * 2)));
+    analysis.metrics.efficiency = analysis.score;
+    if (analysis.methodology.pseudocodeFirst && analysis.methodology.testFirst) {
+      analysis.metrics.problemSolvingApproach = 'systematic';
+    } else if (!analysis.methodology.pseudocodeFirst && !analysis.methodology.testFirst) {
+      analysis.metrics.problemSolvingApproach = 'trial_and_error';
+    } else {
+      analysis.metrics.problemSolvingApproach = 'mixed';
+    }
+    analysis.modelInfo = 'Rule-based engine';
+  }
+
   return analysis;
+}
+
+// Helper function to call the Python script
+function runClassifierModel(features) {
+  return new Promise((resolve, reject) => {
+    const pythonScriptPath = join(__dirname, '../classifier.py');
+    const child = spawn('python', [pythonScriptPath]);
+
+    let stdoutData = '';
+    let stderrData = '';
+
+    child.stdout.on('data', (data) => {
+      stdoutData += data.toString();
+    });
+
+    child.stderr.on('data', (data) => {
+      stderrData += data.toString();
+    });
+
+    child.on('close', (code) => {
+      if (code !== 0) {
+        reject(new Error(`Python process exited with code ${code}. Stderr: ${stderrData}`));
+        return;
+      }
+      try {
+        const result = JSON.parse(stdoutData.trim());
+        resolve(result);
+      } catch (err) {
+        reject(new Error(`Failed to parse Python output: ${err.message}. Output was: ${stdoutData}`));
+      }
+    });
+
+    child.on('error', (err) => {
+      reject(err);
+    });
+
+    child.stdin.write(JSON.stringify(features));
+    child.stdin.end();
+  });
 }
 
 export default router;

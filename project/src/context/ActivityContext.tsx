@@ -29,6 +29,7 @@ export interface ActivityAnalysis {
 
 interface ActivityContextType {
   activities: Activity[];
+  sessionId: string;
   currentProblem: number;
   isRecording: boolean;
   addActivity: (type: Activity['type'], description: string, metadata?: Activity['metadata']) => void;
@@ -59,6 +60,7 @@ interface ActivityProviderProps {
 }
 
 export const ActivityProvider: React.FC<ActivityProviderProps> = ({ children }) => {
+  const [sessionId] = useState(() => 'session_' + Math.random().toString(36).substring(2, 11));
   const [activities, setActivities] = useState<Activity[]>([]);
   const [currentProblem, setCurrentProblem] = useState(1);
   const [isRecording, setIsRecording] = useState(true);
@@ -92,13 +94,14 @@ export const ActivityProvider: React.FC<ActivityProviderProps> = ({ children }) 
       },
       body: JSON.stringify({
         ...newActivity,
+        sessionId,
         problemId: currentProblem,
         timestamp: newActivity.timestamp.toISOString(),
       }),
     }).catch(error => {
       console.error('Failed to send activity to server:', error);
     });
-  }, [isRecording, currentProblem]);
+  }, [isRecording, currentProblem, sessionId]);
 
   const toggleRecording = useCallback(() => {
     setIsRecording(prev => !prev);
@@ -238,6 +241,7 @@ export const ActivityProvider: React.FC<ActivityProviderProps> = ({ children }) 
 
   const value: ActivityContextType = {
     activities,
+    sessionId,
     currentProblem,
     isRecording,
     addActivity,

@@ -2,13 +2,18 @@
 
 A comprehensive full-stack web application that tracks, monitors, and analyzes how students solve coding problems step by step. The app generates visual "Thought Process Reports" showing strengths and areas for improvement.
 
+## 📸 Application Demo
+
+![App Interface Walkthrough](docs/images/generate_ml_report.webp)
+
 ## ✨ Features
 
-### 🎯 Problem Solving Analysis
-- **Real-time Activity Tracking**: Monitor typing, pseudocode, testing, debugging, and refactoring activities
-- **Methodology Detection**: Identify if students use pseudocode-first, test-first, or other approaches
-- **Performance Metrics**: Calculate efficiency scores based on coding vs debugging time
-- **Pattern Recognition**: Analyze problem-solving patterns and provide insights
+### 🎯 Machine Learning & Cognitive Analysis
+- **Scikit-learn Decision Tree Classifier**: Trains on-the-fly to classify students' problem-solving approach (`systematic`, `trial_and_error`, `mixed`) based on their coding vs planning patterns.
+- **Cognitive Regression Models**: Uses Scikit-learn Decision Tree Regressors to predict the student's continuous Focus Level, overall coding Efficiency, and average Typing Speed (WPM).
+- **Real-time Activity Tracking**: Monitor typing, pseudocode, testing, debugging, and refactoring activities.
+- **Methodology Validation**: Verifies planning (pseudocode-first) and testing (test-first) timelines to rate methodology scores.
+- **Pattern Recognition**: Deep analysis of student cognitive states and structured recommendations.
 
 ### 🎨 Modern UI/UX
 - **Deep-night Theme**: Beautiful gradient backgrounds with glass panels

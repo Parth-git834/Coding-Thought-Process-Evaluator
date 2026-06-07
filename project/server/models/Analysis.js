@@ -118,6 +118,10 @@ const analysisSchema = new mongoose.Schema({
       default: 'medium'
     }
   }],
+  modelInfo: {
+    type: String,
+    default: 'Rule-based engine'
+  },
   timestamp: {
     type: Date,
     default: Date.now,
@@ -265,16 +269,17 @@ analysisSchema.statics.getMethodologyInsights = function() {
 
 // Pre-save middleware to calculate additional metrics
 analysisSchema.pre('save', function(next) {
-  // Calculate methodology efficiency
-  this.metrics.efficiency = this.methodologyEfficiency;
-  
-  // Determine problem solving approach
-  if (this.methodology.pseudocodeFirst && this.methodology.testFirst) {
-    this.metrics.problemSolvingApproach = 'systematic';
-  } else if (!this.methodology.pseudocodeFirst && !this.methodology.testFirst) {
-    this.metrics.problemSolvingApproach = 'trial_and_error';
-  } else {
-    this.metrics.problemSolvingApproach = 'mixed';
+  // Calculate methodology efficiency and problem solving approach if not using ML model
+  if (this.modelInfo === 'Rule-based engine') {
+    this.metrics.efficiency = this.methodologyEfficiency;
+    
+    if (this.methodology.pseudocodeFirst && this.methodology.testFirst) {
+      this.metrics.problemSolvingApproach = 'systematic';
+    } else if (!this.methodology.pseudocodeFirst && !this.methodology.testFirst) {
+      this.metrics.problemSolvingApproach = 'trial_and_error';
+    } else {
+      this.metrics.problemSolvingApproach = 'mixed';
+    }
   }
   
   next();

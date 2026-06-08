@@ -4,7 +4,7 @@ A comprehensive full-stack web application that tracks, monitors, and analyzes h
 
 ## 📸 Application Demo
 
-![App Interface Walkthrough](docs/images/generate_ml_report.webp)
+<video src="docs/images/20260607.mp4" width="100%" controls autoplay loop muted></video>
 
 ## ✨ Features
 
